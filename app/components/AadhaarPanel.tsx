@@ -50,6 +50,10 @@ export function AadhaarPanel({ onVerified }: { onVerified: () => void }) {
     }, 1000);
   };
 
+  const isValidAadhaar =
+    aadhaar.replace(/\s/g, "").length === 12 &&
+    !isNaN(Number(aadhaar.replace(/\s/g, "")));
+
   const handleSend = async (isResend = false) => {
     const num = aadhaar.replace(/\s/g, "");
     if (num.length !== 12 || isNaN(Number(num))) {
@@ -67,9 +71,13 @@ export function AadhaarPanel({ onVerified }: { onVerified: () => void }) {
     const d = res.data as Record<string, unknown>;
     setRefId(String(d.ref_id ?? ""));
     setRawResp(res.raw);
-    setStep("otp");
+    setStep(d.status !== "INVALID" ? "otp" : "input");
     setSendMsg(
-      isResend ? "✓ New OTP sent" : "✓ OTP sent to your registered mobile",
+      isResend
+        ? "✓ New OTP sent"
+        : d.status == "INVALID"
+          ? "Invalid Aadhaar number"
+          : "✓ OTP sent to your registered mobile",
     );
     startResend();
     if (isResend) setOtp(["", "", "", "", "", ""]);
@@ -152,7 +160,7 @@ export function AadhaarPanel({ onVerified }: { onVerified: () => void }) {
         </div>
 
         <div className="flex items-center gap-3 mt-5">
-          {step === "input" && (
+          {step === "input" && isValidAadhaar && (
             <Btn
               variant="acc"
               loading={sendLoading}
